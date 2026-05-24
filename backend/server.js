@@ -21,6 +21,25 @@ app.get("/", (req, res) => {
   });
 });
 
+app.post("/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (
+    email === "admin@test.com" &&
+    password === "123456"
+  ) {
+    return res.json({
+      success: true,
+      message: "Login successful",
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    message: "Invalid credentials",
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
