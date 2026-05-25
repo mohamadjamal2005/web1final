@@ -1,6 +1,8 @@
 "use client";
 
+import Turnstile from "react-turnstile";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import { toast } from "sonner";
@@ -12,6 +14,7 @@ type LoginFormData = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const {
     register,
@@ -22,7 +25,10 @@ export default function LoginPage() {
     try {
       const response = await api.post(
         "/auth/login",
-        data
+        {
+          ...data,
+          turnstileToken
+        }
       );
       toast.success(response.data.message);
       router.push("/dashboard");
@@ -31,6 +37,10 @@ export default function LoginPage() {
         error.response?.data?.message ||
         "Something went wrong"
       );
+    }
+    if (!turnstileToken) {
+      toast.error("Please verify you are human");
+      return;
     }
   }
 
@@ -70,6 +80,15 @@ export default function LoginPage() {
               {...register("password")}
             />
           </div>
+
+          <Turnstile
+            sitekey={
+              process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!
+            }
+            onVerify={(token) => {
+              setTurnstileToken(token);
+            }}
+          />
 
           <button
             type="submit"

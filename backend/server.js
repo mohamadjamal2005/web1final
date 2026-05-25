@@ -23,8 +23,44 @@ app.get("/", (req, res) => {
 });
 
 app.post("/auth/login", async (req, res) => {
-  const { email, password } = req.body;
+  const {
+    email,
+    password,
+    turnstileToken,
+  } = req.body;
 
+  // Verify Cloudflare Turnstile
+  const verifyURL =
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+  const cloudflareResponse = await fetch(
+    verifyURL,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        secret:
+          process.env.TURNSTILE_SECRET_KEY,
+        response: turnstileToken,
+      }),
+    }
+  );
+
+  const data =
+    await cloudflareResponse.json();
+
+  if (!data.success) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Robot verification failed",
+    });
+  }
+
+  // Check credentials
   if (
     email !== "admin@test.com" ||
     password !== "123456"
@@ -35,6 +71,7 @@ app.post("/auth/login", async (req, res) => {
     });
   }
 
+  // Create JWT
   const token = jwt.sign(
     {
       email,
@@ -46,6 +83,7 @@ app.post("/auth/login", async (req, res) => {
     }
   );
 
+  // Save cookie
   res.cookie("token", token, {
     httpOnly: true,
     secure: false,
