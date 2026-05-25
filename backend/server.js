@@ -66,7 +66,7 @@ app.post("/auth/login", async (req, res) => {
   }
 
   if (
-    email !== "mohamad.jamal@isae.edu.lb" ||
+    email !== "oussgool33@gamil.com" ||
     password !== "123456"
   ) {
     return res.status(401).json({
