@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -25,18 +26,70 @@ app.post("/auth/login", async (req, res) => {
   const { email, password } = req.body;
 
   if (
-    email === "admin@test.com" &&
-    password === "123456"
+    email !== "admin@test.com" ||
+    password !== "123456"
   ) {
-    return res.json({
-      success: true,
-      message: "Login successful",
+    return res.status(401).json({
+      success: false,
+      message: "Invalid credentials",
     });
   }
 
-  return res.status(401).json({
-    success: false,
-    message: "Invalid credentials",
+  const token = jwt.sign(
+    {
+      email,
+      role: "admin",
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "1d",
+    }
+  );
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+  });
+
+  return res.json({
+    success: true,
+    message: "Login successful",
+  });
+});
+
+app.get("/auth/me", (req, res) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({
+      authenticated: false,
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    return res.json({
+      authenticated: true,
+      user: decoded,
+    });
+  } catch (error) {
+    return res.status(401).json({
+      authenticated: false,
+    });
+  }
+});
+
+app.post("/auth/logout", (req, res) => {
+  res.clearCookie("token");
+
+  return res.json({
+    success: true,
+    message: "Logged out",
   });
 });
 
