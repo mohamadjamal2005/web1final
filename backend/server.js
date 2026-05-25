@@ -1,10 +1,16 @@
+require("dotenv").config();
+
 const jwt = require("jsonwebtoken");
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
+const { Resend } = require("resend");
 
-dotenv.config();
+const resend = new Resend(
+  process.env.RESEND_API_KEY
+);
+
+const otpStore = {};
 
 const app = express();
 
@@ -29,7 +35,6 @@ app.post("/auth/login", async (req, res) => {
     turnstileToken,
   } = req.body;
 
-  // Verify Cloudflare Turnstile
   const verifyURL =
     "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
@@ -60,9 +65,8 @@ app.post("/auth/login", async (req, res) => {
     });
   }
 
-  // Check credentials
   if (
-    email !== "admin@test.com" ||
+    email !== "mohamad.jamal@isae.edu.lb" ||
     password !== "123456"
   ) {
     return res.status(401).json({
@@ -71,7 +75,51 @@ app.post("/auth/login", async (req, res) => {
     });
   }
 
-  // Create JWT
+  const otp = Math.floor(
+    100000 + Math.random() * 900000
+  ).toString();
+
+  otpStore[email] = otp;
+
+  await resend.emails.send({
+    from: "onboarding@resend.dev",
+    to: email,
+    subject: "Your OTP Code",
+    html: `
+      <h1>Your OTP Code</h1>
+      <p>Your verification code is:</p>
+      <h2>${otp}</h2>
+    `,
+  });
+
+  return res.json({
+    success: true,
+    message: "OTP sent to your email",
+    email,
+  });
+});
+
+app.post("/auth/verify-otp", (req, res) => {
+  const { email, otp } = req.body;
+
+  const storedOtp = otpStore[email];
+
+  if (!storedOtp) {
+    return res.status(400).json({
+      success: false,
+      message: "OTP expired",
+    });
+  }
+
+  if (storedOtp !== otp) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid OTP",
+    });
+  }
+
+  delete otpStore[email];
+
   const token = jwt.sign(
     {
       email,
@@ -83,7 +131,6 @@ app.post("/auth/login", async (req, res) => {
     }
   );
 
-  // Save cookie
   res.cookie("token", token, {
     httpOnly: true,
     secure: false,
