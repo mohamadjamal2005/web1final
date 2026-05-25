@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 type LoginFormData = {
   email: string;
@@ -15,6 +16,7 @@ type LoginFormData = {
 export default function LoginPage() {
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -77,12 +79,34 @@ export default function LoginPage() {
               Password
             </label>
 
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black"
-              {...register("password")}
-            />
+            <div className="relative">
+              <input
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                placeholder="Enter your password"
+                className="w-full border rounded-lg px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-black"
+                {...register("password")}
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword(
+                    !showPassword
+                  )
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                {showPassword ? (
+                  <EyeOff size={20} />
+                ) : (
+                  <Eye size={20} />
+                )}
+              </button>
+            </div>
           </div>
 
           <Turnstile
