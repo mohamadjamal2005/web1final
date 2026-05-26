@@ -128,7 +128,7 @@ NODE_ENV=development
 ## Clone Repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY
+git clone https://github.com/mohamadjamal2005/web1final
 ```
 
 ---
