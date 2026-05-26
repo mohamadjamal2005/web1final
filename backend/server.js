@@ -134,10 +134,14 @@ app.post("/auth/verify-otp", (req, res) => {
     }
   );
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   res.cookie("token", token, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none"
+    secure: isProduction,
+    sameSite: isProduction
+      ? "none"
+      : "lax"
   });
 
   return res.json({
