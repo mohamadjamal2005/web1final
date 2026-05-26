@@ -15,8 +15,11 @@ const otpStore = {};
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true,
+  origin: [
+    "http://localhost:3000",
+    "https://web1final.vercel.app"
+],
+  credentials: true
 }));
 
 app.use(express.json());
@@ -133,8 +136,8 @@ app.post("/auth/verify-otp", (req, res) => {
 
   res.cookie("token", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none"
   });
 
   return res.json({
